@@ -1,5 +1,6 @@
 import express from "express";
 import UserController from "../controller/user_controller.js";
+import PostController from "../controller/post_controller.js";
 import { body } from "express-validator";
 
 const route=express.Router();
@@ -33,14 +34,39 @@ route.put('/users/:user_id', [
 route.delete('/users/:user_id', UserController.deleteUser);
 
 
+// end of user end point
 
 
-// delete user
-route.post('/delete/user',[
-    body('email','Please enter a valid email').isEmail(),
-], UserController.deleteUser);
+// post end points
 
+// GET /posts -> get list of all posts
+route.get('/posts',[
+    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
+], PostController.fetchAllPost); 
 
+// GET /posts/{post_id} -> get details of specific post by post id
+route.get('/posts/:post_id',[
+    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
+], PostController.fetchPost);
+
+// POST /posts -> create new post
+route.post('/posts', [
+    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
+    body('title', 'Please enter a valid title').isLength(5),
+    body('description', 'Please enter a description').isLength({ min: 10 })
+], PostController.newPost);
+
+// PUT /posts/{post_id} -> edit existing post
+route.put('/posts/:post_id', [
+    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
+    body('title', 'Please enter a valid title').isLength(5),
+    body('description', 'Please enter a description').isLength({ min: 10 })
+], PostController.updatePost);
+
+// DELETE /posts/{post_id} -> edit existing post
+route.delete('/posts/:post_id',[
+    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
+], PostController.deletePost);
 
 
 export {route};

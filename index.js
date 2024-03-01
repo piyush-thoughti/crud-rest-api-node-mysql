@@ -14,6 +14,7 @@ app.use(cors());
 // app.use(cors({origin:["http://localhost:3000",], methods: ['GET','POST','DELETE'], credentials: true,}));
 
 app.use('/', route);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
 });
