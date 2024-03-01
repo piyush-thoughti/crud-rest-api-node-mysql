@@ -2,6 +2,8 @@
 import express from "express";
 import cors from 'cors';
 import { route } from "./route/route.js";
+
+
 // Create an Express application
 const app = express();
 

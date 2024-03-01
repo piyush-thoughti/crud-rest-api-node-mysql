@@ -9,6 +9,8 @@ This project is a simple example of a CRUD (Create, Read, Update, Delete) REST A
 - **Update**: Modify existing records in the database.
 - **Delete**: Remove records from the database.
 
+- We can create user and posts for each users using this api.
+
 ## Prerequisites
 
 Before running this application, ensure you have the following installed:
