@@ -51,27 +51,42 @@ const registerUser = async (req, res) => {
     }
 
     try {
+        const name=req.body.name.trim();
+        const email=req.body.email.trim();
+        const age=req.body.age;
+
         // Check for duplicate email id
-        connection.query("SELECT id FROM users WHERE email='"+req.body.email+"' Limit 1", (error, results) => {
+        connection.query("SELECT id FROM users WHERE email='"+email+"' Limit 1", (error, results) => {
 
             if (error) {
               console.error('Error executing query:', error);
               return res.status(501).json({ success: false, message: "Internal server error", error: error });
             }
 
-            console.log(results);
+            
 
             if(results.length>0){
                 return res.status(201).json({ success: false, message: "Email already exist.", error: [] });
             }
+           
+
+
+            // now we can start creating user account
+            connection.query("INSERT INTO users SET ?", { name: name, email: email, age: age }, (error, results) => {
+                if (error) {
+                    console.error('Error executing query:', error);
+                    return res.status(501).json({ success: false, message: "Internal server error", error: error });
+                }
             
-            // Close the connection if needed
-            connection.end();
-
-            // start work from here
-
-
-            return res.status(201).json({ success: true, message: "Account created!" });
+                if (results.affectedRows === 0) {
+                    // No rows were inserted
+                    return res.status(500).json({ success: false, message: "Failed to create account. Please try again.", error: [] });
+                }
+            
+                // Account created successfully
+                connection.end();
+                return res.status(201).json({ success: true, message: "Account created!", user_id: results.insertId });
+            });
             
         });
         
