@@ -1,6 +1,6 @@
 
 import { validationResult } from "express-validator";
-// import { logger } from '../logger/index.js';
+import { logger } from '../logger/index.js';
 
 import mysql from "mysql";
 
@@ -11,33 +11,17 @@ const connection = mysql.createConnection({
     user: 'root',      // Change this to your MySQL username
     password: '',      // Change this to your MySQL password
     database: 'basic-crud-db' // Change this to your MySQL database name
-  });
+});
   
 // Connect to MySQL
 connection.connect((err) => {
-if (err) {
-    console.error('Error connecting to MySQL: ' + err.stack);
-    return;
-}
-console.log('Connected to MySQL as id ' + connection.threadId);
+    if (err) {
+        console.error('Error connecting to MySQL: ' + err.stack);
+        return;
+    }
+    console.log('Connected to MySQL as id ' + connection.threadId);
 });
 
-// to generate email tokens
-function fetchAllUser(req,res) {
-
-    connection.query('SELECT * FROM users', (error, results) => {
-
-        if (error) {
-          console.error('Error executing query:', error);
-          return res.status(501).json({ success: false, message: "Internal server error", error: error });
-        }
-        
-        // Close the connection if needed
-        connection.end();
-        return res.status(200).json({ success: true, message: "Data fetched", data: results, error: [] });
-    });
-    
-}
 
 
 // end point for User Sign Up by POST request /register
@@ -95,41 +79,69 @@ const registerUser = async (req, res) => {
     }
 };
 
+// end point for user edit
+const updateUser = async (req, res) => {
+
+
+    // checking if there any error like short password or wrong email
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: "Please fill all the required details correctly !", errors: errors.array() });
+    }
+
+    try {
+        const userId = req.params.user_id;
+        const name=req.body.name.trim();
+        const email=req.body.email.trim();
+        const age=req.body.age;
+
+        // Updating user account using parameterized query
+        connection.query("UPDATE users SET name = ?, email = ?, age = ? WHERE id = ?", [name, email, age, userId], (error, results) => {
+            if (error) {
+                console.error('Error executing query:', error);
+                return res.status(501).json({ success: false, message: "Internal server error", error: error });
+            }
+        
+            if (results.affectedRows === 0) {
+                // No rows were updated
+                return res.status(500).json({ success: false, message: "User not found", error: [] });
+            }
+        
+            // Account updated successfully
+            return res.status(201).json({ success: true, message: "Account updated!" });
+        });
+        
+    } catch (error) {
+        return res.status(400).json({ success: false, message: "Internal server error", long_message: error.message });
+    }
+};
+
 
 // end point for getting Single User details using GET request
-const userDetail = (async (req, res) => {
+const fetchUser = (async (req, res) => {
     try {
-        const currentDate = new Date();
-        const user_id=req.user.id;
-        const userDetails = await User.findOne({ _id: user_id }).select({ name: 1, email: 1, currentPlan: 1 });
-        let planPurchase={};
+        const userId = req.params.user_id;
+        connection.query("SELECT * FROM users WHERE id= ? LIMIT 1", [userId], (error, results) => {
 
-        const userLastPlan = await PlanPurchase.findOne({
-            user_id: user_id,
-            status: 1,
-        }).sort({end_date: -1});
+            if (error) {
+              console.error('Error executing query:', error);
+              return res.status(501).json({ success: false, message: "Internal server error", error: error });
+            }
 
+            if(results.length==0){
+                return res.status(201).json({ success: false, message: "No user found.", error: [] });
+            }
 
-        if (userLastPlan) {
-            planPurchase=userLastPlan;
-        }
-
-        const userActivePlan = await PlanPurchase.findOne({
-            user_id: user_id,
-            status: 1, // Assuming 1 means active plan
-            start_date: { $lte: currentDate }, // Plan starts before or on the provided date
-            end_date: { $gte: currentDate }, // Plan ends after or on the provided date
+            
+            // Close the connection if needed
+            return res.status(200).json({ success: true, message: "User data fetched", data: results[0], error: [] });
         });
-
-        return res.status(200).json({ success: true, user: userDetails ?? {}, plan_purchase_details: planPurchase ?? {}, activePlan: userActivePlan ?? {} });
     } catch (error) {
-        logger.error(JSON.stringify({ file: "user_controller/userDetail", error: error, message: "An error occurred while fetching the userDetails" }));
+        logger.error(JSON.stringify({ file: "user_controller/fetchUser", error: error, message: "An error occurred while fetching the userDetails" }));
             
         return res.status(501).json({ success: false, message: "Internal server error"})
     }
 });
-
-
 
 // end point for delete user
 const deleteUser = async (req, res) => {
@@ -141,31 +153,54 @@ const deleteUser = async (req, res) => {
     }
 
     try {
-        const email = req.body.email;
+        const userId = req.params.user_id;
+        connection.query("DELETE FROM users WHERE id = ?", [userId], (error, results) => {
 
-        // Find the user by email
-        const user = await User.findOne({ email: email });
+            if (error) {
+              console.error('Error executing query:', error);
+              return res.status(501).json({ success: false, message: "Internal server error", error: error });
+            }
 
-        // Check if the user exists
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found!" });
-        }
+            if(results.affectedRows==0){
+                return res.status(201).json({ success: false, message: "No user found.", error: [] });
+            }
 
-        // Delete the user from the database
-        await User.deleteOne({ email: email });
-
-        return res.status(200).json({ success: true, message: "User deleted successfully!" });
+            
+            return res.status(200).json({ success: true, message: "User deleted successfully", user_id: userId, error: [] });
+        });
     } catch (error) {
-        return res.status(500).json({ success: false, message: "Failed to delete user", error: error.message });
+        logger.error(JSON.stringify({ file: "user_controller/deleteUser", error: error, message: "An error occurred while fetching the userDetails" }));
+            
+        return res.status(501).json({ success: false, message: "Internal server error"})
     }
 
 }
 
+
+// to generate email tokens
+function fetchAllUser(req,res) {
+
+    connection.query('SELECT * FROM users', (error, results) => {
+
+        if (error) {
+          console.error('Error executing query:', error);
+          return res.status(501).json({ success: false, message: "Internal server error", error: error });
+        }
+        
+        // Close the connection if needed
+        connection.end();
+        return res.status(200).json({ success: true, message: "Data fetched", data: results, error: [] });
+    });
+    
+}
+
+
 const UserController = {
     fetchAllUser,
+    fetchUser,
     registerUser,
+    updateUser,
     deleteUser,
-    userDetail,
 };
 
 export default UserController;

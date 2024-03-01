@@ -13,7 +13,7 @@ route.get('/',(req,res)=>{
 route.get('/users', UserController.fetchAllUser);
 
 // GET /users/:user_id -> get details of specific user by user id
-route.get('/users/:user_id', UserController.fetchAllUser);
+route.get('/users/:user_id', UserController.fetchUser);
 
 // POST /users -> create new user 
 route.post('/users', [
@@ -27,7 +27,7 @@ route.put('/users/:user_id', [
     body('name', 'Please enter a valid name with at least 3 characters').isLength({ min: 3 }),
     body('email', 'Please enter a valid email').isEmail(),
     body('age', 'Please enter a valid age').isInt({ min: 0 })
-], UserController.fetchAllUser);
+], UserController.updateUser);
 
 // DELETE /users/:user_id -> delete existing user
 route.delete('/users/:user_id', UserController.deleteUser);
