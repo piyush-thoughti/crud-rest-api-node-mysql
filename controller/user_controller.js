@@ -2,7 +2,8 @@
 import { validationResult } from "express-validator";
 import { logger } from '../logger/index.js';
 import User from '../models/User.js';
-
+import Post from '../models/Post.js';
+import {Op} from 'sequelize';
 
 const UserController = {
     
@@ -62,9 +63,9 @@ const UserController = {
             }
 
             // Check for duplicate email id
-            const existingUser = await User.findOne({ where: { email } });
+            const existingUser = await User.findOne({ where: { email: email, id: { [Op.ne]: userId }  } }); // we have check email but not for same user id
             if (existingUser) {
-                return res.status(201).json({ success: false, message: "Email already exists.", error: [] });
+                return res.status(201).json({ success: false, message: "Email already taken by other user.", error: [] });
             }
 
 
@@ -142,6 +143,81 @@ const UserController = {
             logger.error(JSON.stringify({ file: "user_controller/fetchUser", error: error, message: "An error occurred while fetching the userDetails" }));
             return res.status(500).json({ success: false, message: "Internal server error" });
         }
+    },
+
+    // end point for getting Single post
+    fetchUserPost: async (req, res) => {
+        try {
+            const postId = req.params.post_id;
+            const userId = req.params.user_id;
+
+            const post = await Post.findOne({
+                where: {
+                    id: postId,
+                    user_id: userId,
+                },
+                attributes: ['id', 'title', 'description', 'created_at'],
+            });
+
+            if (!post) {
+                return res.status(404).json({ success: false, message: "Post not found.", error: [] });
+            }
+
+            return res.status(200).json({ success: true, message: "post data fetched", data: post, error: [] });
+
+        } catch (error) {
+            logger.error(JSON.stringify({ file: "user_controller/fetchPost", error: error, message: "An error occurred while fetching the userDetails" }));
+
+            return res.status(501).json({ success: false, message: "Internal server error" })
+        }
+    },
+
+    // endpoint to fetch all post
+    fetchUserPosts: async (req, res) => {
+        const userId = req.params.user_id;
+
+        const posts = await Post.findAll({ 
+            where: {
+                user_id: userId, // for specific user
+            },
+            attributes: ['id', 'title', 'description', 'created_at'],  // select only this fields
+        });
+
+        if (!posts) {
+            return res.status(404).json({ success: false, message: "Post not found.", error: [] });
+        }
+
+        return res.status(200).json({ success: true, message: "post data fetched", data: posts, error: [] });
+    },
+    
+    // end point for delete post
+    deleteUserPost: async (req, res) => {
+
+        // checking if there any error like short password or wrong email
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(200).json({ success: false, message: "Please fill all the required details correctly !", errors: errors.array() });
+        }
+
+        try {
+            const postId = req.params.post_id;
+            const userId = req.params.user_id;
+
+            // Deleting user
+            const deletedRowCount = await Post.destroy({ where: { id: postId, user_id: userId } });
+
+            if (deletedRowCount === 0) {
+                return res.status(404).json({ success: false, message: "Post not found.", error: [] });
+            }
+
+            return res.status(200).json({ success: true, message: "Post deleted successfully", post_id: postId, error: [] });
+
+        } catch (error) {
+            logger.error(JSON.stringify({ file: "user_controller/deleteUser", error: error, message: "An error occurred while fetching the userDetails" }));
+
+            return res.status(501).json({ success: false, message: "Internal server error" })
+        }
+
     },
 
 };

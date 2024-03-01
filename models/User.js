@@ -3,7 +3,6 @@ import { Sequelize } from 'sequelize';
 import sequelize from '../db/db.js';
 
 const User = sequelize.define('users', {
-    // Define your user model fields here
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -37,7 +36,7 @@ const User = sequelize.define('users', {
         allowNull: true
     }
 }, {
-    timestamps: true, // Enable timestamps
+    timestamps: false, // Disabled timestamps
     paranoid: true, // Enable soft deletes
     underscored: true, // Use snake_case for column names
     tableName: 'users' // Specify the table name if it's different from the model name

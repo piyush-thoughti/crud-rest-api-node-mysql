@@ -16,6 +16,15 @@ route.get('/users', UserController.fetchAllUser);
 // GET /users/:user_id -> get details of specific user by user id
 route.get('/users/:user_id', UserController.fetchUser);
 
+// GET /users/:user_id/posts/:post_id -> get details of specific user by specific posts
+route.get('/users/:user_id/posts', UserController.fetchUserPosts);
+
+// GET /users/:user_id/posts/:post_id -> get details of specific user by specific posts
+route.get('/users/:user_id/posts/:post_id', UserController.fetchUserPost);
+
+// GET /users/:user_id /posts -> get details of specific user by posts
+route.delete('/users/:user_id/posts/:post_id', UserController.deleteUserPost);
+
 // POST /users -> create new user 
 route.post('/users', [
     body('name', 'Please enter a valid name with at least 3 characters').isLength({ min: 3 }),
@@ -40,14 +49,10 @@ route.delete('/users/:user_id', UserController.deleteUser);
 // post end points
 
 // GET /posts -> get list of all posts
-route.get('/posts',[
-    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
-], PostController.fetchAllPost); 
+route.get('/posts', PostController.fetchAllPost);  // show all post without user id without user id required
 
 // GET /posts/{post_id} -> get details of specific post by post id
-route.get('/posts/:post_id',[
-    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
-], PostController.fetchPost);
+route.get('/posts/:post_id', PostController.fetchPost); // show post directly without user id required
 
 // POST /posts -> create new post
 route.post('/posts', [
@@ -64,9 +69,7 @@ route.put('/posts/:post_id', [
 ], PostController.updatePost);
 
 // DELETE /posts/{post_id} -> edit existing post
-route.delete('/posts/:post_id',[
-    body('user_id', 'Please enter a valid user id').isInt({ min: 1 }),
-], PostController.deletePost);
+route.delete('/posts/:post_id', PostController.deletePost);  // delete post directly without user id required
 
 
 export {route};

@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import { logger } from '../logger/index.js';
 import Post from '../models/Post.js';
 import User from '../models/User.js';
-
+import sequelize from '../db/db.js';
 
 const PostController = {
 
@@ -20,22 +20,37 @@ const PostController = {
             const title = req.body.title.trim();
             const description = req.body.description.trim();
             const userId = req.body.user_id;
-
+ 
             // Check if the user exists
             const user = await User.findByPk(userId);
             if (!user) {
                 return res.status(404).json({ success: false, message: "User not found.", error: [] });
             }
 
+            
+            // Check if the post exists with the same title
+            const same_post = await Post.findOne({
+                where: {
+                    title: sequelize.where(sequelize.fn('LOWER', sequelize.col('title')), sequelize.fn('LOWER', title)), // title is case insensitive
+                    user_id: userId
+                }
+            });
+            
+            if (same_post) {
+                // user can not create a post with same title
+                return res.status(404).json({ success: false, message: "One or more posts exist with the same title.", error: [] });
+            }
+
+
             // Create the post
             const newPost = await Post.create({
-                title: title.trim(),
+                title: title.trim(), 
                 description: description.trim(),
                 user_id: userId
             });
 
             // Respond with the created post
-            return res.status(201).json({ success: true, message: "Post created!", post: newPost });
+            return res.status(201).json({ success: true, message: "Post created!", post_id: newPost.id });
 
         } catch (error) {
             return res.status(400).json({ success: false, message: "Internal server error", long_message: error.message });
@@ -90,18 +105,8 @@ const PostController = {
 
         try {
             const postId = req.params.post_id;
-            const userId = req.body.user_id;
-
-            // Check if the user exists
-            const post = await Post.findByPk(postId);
-            if (!post) {
-                return res.status(404).json({ success: false, message: "Post not found.", error: [] });
-            }
-
-            if (post.user_id != userId) {
-                return res.status(401).json({ success: false, message: "You do not have access for this post.", error: [] });
-            }
-
+           
+           
             // Deleting user
             const deletedRowCount = await Post.destroy({ where: { id: postId } });
             if (deletedRowCount === 0) {
@@ -122,13 +127,13 @@ const PostController = {
     fetchPost: async (req, res) => {
         try {
             const postId = req.params.post_id;
-            const userId = req.body.user_id;
 
             const post = await Post.findOne({
                 where: {
                     id: postId,
-                    user_id: userId,
-                }
+                },
+                attributes: ['id', 'title', 'description', 'created_at'], 
+                include: [{ model: User, attributes: ['id', 'name', 'email', 'created_at'] }] // fetching user also with post 
             });
 
             if (!post) {
@@ -146,12 +151,10 @@ const PostController = {
 
     // endpoint to fetch all post
     fetchAllPost: async (req, res) => {
-        const userId = req.body.user_id;
 
         const posts = await Post.findAll({
-            where: {
-                user_id: userId,
-            }
+            attributes: ['id', 'title', 'description', 'created_at'], 
+            include: [{ model: User, attributes: ['id', 'name', 'email', 'created_at'] }] // fetching user also with post 
         });
 
         if (!posts) {

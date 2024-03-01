@@ -1,11 +1,9 @@
-// models/Post.js
 import { Sequelize } from 'sequelize';
 import sequelize from '../db/db.js';
-import User from './User.js'; // Import the User model
+import User from './User.js'; 
 
 
 const Post = sequelize.define('posts', {
-    // Define your post model fields here
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -26,13 +24,40 @@ const Post = sequelize.define('posts', {
             model: User, // Reference the User model
             key: 'id' // Reference the id field in the User model
         }
+    },
+    created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        allowNull: false
+    },
+    updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        allowNull: false
+    },
+    deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true
     }
 }, {
-    // Define options for the model
+    
     paranoid: true, // Enable soft deletes
-    timestamps: true, // Enable timestamps
-    underscored: true, // Use snake_case for column names
-    tableName: 'posts' // Specify the table name if it's different from the model name
+    timestamps: false, // Disabled timestamps
+    underscored: true, 
+    tableName: 'posts',
+    indexes: [
+        { 
+            // title and user id must be unique for each user 
+            unique: true,
+            name: 'unique_title_per_user',
+            fields: ['title', 'user_id'],
+            msg: 'Title must be unique per user'
+        }
+    ]
 });
+
+
+// relationship with user table
+Post.belongsTo(User, { foreignKey: 'user_id' });
 
 export default Post;

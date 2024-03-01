@@ -54,6 +54,35 @@ The base URL for all endpoints is `/`.
   - `age`: Updated age of the user (minimum 0).
 - **Response:** JSON object representing the updated user.
 
+#### Fetch User Post
+
+- **URL:** `/users/:user_id/posts`
+- **Method:** `GET`
+- **Description:** Get list of posts creted by this user.
+- **Parameters:**
+  - `user_id`: ID of the user.
+- **Response:** JSON object representing the list of posts.
+
+#### Fetch User Single Post
+
+- **URL:** `/users/:user_id/posts/:post_id`
+- **Method:** `GET`
+- **Description:** Get details of a posts creted by this user.
+- **Parameters:**
+  - `user_id`: ID of the user .
+  - `post_id`: ID of the postte.
+- **Response:** JSON object representing the details of a posts 
+
+#### Delete User Single Post
+
+- **URL:** `/users/:user_id/posts/:post_id`
+- **Method:** `DELETE`
+- **Description:** Delete a posts creted by this user.
+- **Parameters:**
+  - `user_id`: ID of the user .
+  - `post_id`: ID of the postte.
+- **Response:** JJSON object indicating success or failure of the deletion operation.
+
 #### Delete User
 
 - **URL:** `/users/:user_id`
@@ -81,8 +110,6 @@ The base URL for all endpoints is `/`.
 - **Description:** Retrieves details of a specific post by post ID.
 - **Parameters:**
   - `post_id`: ID of the post to retrieve.
-- **Request Body:**
-  - `user_id`: User Id  of the user >0.
 - **Response:** JSON object representing the post.
 
 #### Create New Post
@@ -116,8 +143,6 @@ The base URL for all endpoints is `/`.
 - **Description:** Deletes an existing post by post ID.
 - **Parameters:**
   - `post_id`: ID of the post to delete.
-- **Request Body:**
-  - `user_id`: User Id  of the user >0.
 - **Response:** JSON object indicating success or failure of the deletion operation.
 
 ## Error Handling
