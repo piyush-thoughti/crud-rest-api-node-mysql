@@ -2,26 +2,11 @@
 import { validationResult } from "express-validator";
 import { logger } from '../logger/index.js';
 
-import mysql from "mysql";
+// post_controller.js
+import createConnection from './db.js';
 
-
-// MySQL connection configuration
-const connection = mysql.createConnection({
-    host: 'localhost', // Change this to your MySQL host
-    user: 'root',      // Change this to your MySQL username
-    password: '',      // Change this to your MySQL password
-    database: 'basic-crud-db' // Change this to your MySQL database name
-});
-  
-// Connect to MySQL
-connection.connect((err) => {
-    if (err) {
-        console.error('Error connecting to MySQL: ' + err.stack);
-        return;
-    }
-    console.log('Connected to MySQL as id ' + connection.threadId);
-});
-
+// Create MySQL connection
+const connection = createConnection();
 
 
 // end point for User Sign Up by POST request /register
