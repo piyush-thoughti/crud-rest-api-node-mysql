@@ -4,7 +4,7 @@ import { logger } from '../logger/index.js';
 import Post from '../models/Post.js';
 import User from '../models/User.js';
 import sequelize from '../db/db.js';
-
+import {Op} from 'sequelize';
 const PostController = {
 
     // end point for creating new post
@@ -76,6 +76,23 @@ const PostController = {
             if (!post) {
                 return res.status(404).json({ success: false, message: "Post not found.", error: [] });
             }
+
+
+            // Check if the post exists with the same title
+            const same_post = await Post.findOne({
+                where: {
+                    title: sequelize.where(sequelize.fn('LOWER', sequelize.col('title')), sequelize.fn('LOWER', title)), // title is case insensitive
+                    user_id: userId,
+                    id: { [Op.ne]: postId } 
+                }
+            });
+            
+            if (same_post) {
+                // user can not create a post with same title
+                return res.status(404).json({ success: false, message: "One or more posts exist with the same title.", error: [] });
+            }
+
+            
 
             if (post.user_id != userId) {
                 return res.status(401).json({ success: false, message: "You do not have access for this post.", error: [] });
